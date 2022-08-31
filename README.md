@@ -1,1 +1,1 @@
-Git bash scripts
+Excutable bash scripts.
