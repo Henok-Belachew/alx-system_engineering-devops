@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+#Display a list of currently running processes.
+#including those which might not have a pid.
+#show process hierachy.
+
+#a.....select all processes both session leaders and processes not associated
+#with a terminal
+
+#x.....lift the BSD-style "must have a tty" restriction imposed
+#on all processes when some BSD-sytle options are used.
+
+#u......select by effective user ID.(EUID) or name.
+
+#f......Do full format listing.
+
+
+ps -axuf
