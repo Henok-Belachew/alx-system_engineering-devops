@@ -1,1 +1,1 @@
-This project is **0x05. Processes and signals**
+Another bash project
