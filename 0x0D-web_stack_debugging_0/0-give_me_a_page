@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 #Contains command used to start apache2 server on a container.
 sudo apt-get install apache2
+cd /var/www/html/
 echo "Hello Holberton" > index.html
 sudo service apache2 start
