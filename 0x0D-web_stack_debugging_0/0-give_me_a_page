@@ -5,5 +5,5 @@ sudo apt-get install curl
 sudo apt-get install apache2
 cd /var/www/html/
 echo "Hello Holberton" > index.html
-sudo service apache2 start
-sudo service apache2 status
+service apache2 start
+service apache2 status
