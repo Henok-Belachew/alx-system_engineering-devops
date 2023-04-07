@@ -1,42 +1,9 @@
 #!/usr/bin/env bash
-# Installs HAProxy version 1.8 with the following configurations:
-#+    Enables management via the init script.
-#+    Distributes requests using a round-robin algorithm.
+# Configuring Haproxy Load Balancer
+sudo apt update
+sudo apt-get install -y haproxy
 
-apt-get install -y software-properties-common
-add-apt-repository -y ppa:vbernat/haproxy-1.8
-apt-get update
-apt-get install -y haproxy=1.8.\*
-
-echo "ENABLED=1" >> /etc/default/haproxy
-mv /etc/haproxy/haproxy.cfg{,.original}
-touch /etc/haproxy/haproxy.cfg
-
-printf %s "global
-    log 127.0.0.1 local0 notice
-    maxconn 2000
-    user haproxy
-    group haproxy
-defaults
-    log     global
-    mode    http
-    option  httplog
-    option  dontlognull
-    retries 3
-    option redispatch
-    timeout connect  5000
-    timeout client  10000
-    timeout server  10000
-listen hbnb
-    bind 0.0.0.0:80
-    mode http
-    stats enable
-    stats uri /haproxy?stats
-    balance roundrobin
-    option httpclose
-    option forwardfor
-    server 959-web-01 35.227.20.159:80 check
-    server 959-web-02 3.209.56.205:80 check
-" >> /etc/haproxy/haproxy.cfg
-
-service haproxy start
+# Making haproxy to start automaticaly without manual intervention
+sudo  echo "ENABLED=1" | sudo tee -a "/etc/default/haproxy"
+sudo echo -e "\nfrontend http\n\tbind *:80\n\tmode http\n\tdefault_backend web-backend\n\nbackend web-backend\n\tbalance roundrobin\n\tserver 130100-web-01 54.158.189.235:80 check\n\tserver 130100-web-02 34.202.157.251:80 check" | sudo tee -a /etc/haproxy/haproxy.cfg
+sudo service haproxy restart
