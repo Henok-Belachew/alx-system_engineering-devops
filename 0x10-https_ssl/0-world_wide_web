@@ -1,8 +1,19 @@
 #!/usr/bin/env bash
-# Domain Information Dsiplayer
-if [ $# -eq 1 ]; then
-	queries="www.$1 lb-01.$1 web-01.$1 web-02.$1"
+# DNS recored information
+printers ()
+{
+    printf "The subdomain %s is a " "$2"
+    dig "$2.$1" | grep -A1 'ANSWER SECTION:' | awk -F' ' '{ printf $4 }'
+    printf " record and points to "
+    dig "$2.$1" | grep -A1 'ANSWER SECTION:' | awk -F' ' '{ printf $5 }'
+    echo ""
+}
+
+if [ -z "$2" ]; then
+   for subs in "www" "lb-01" "web-01" "web-02"
+   do
+       printers "$1" "$subs"
+   done
 else
-	queries="$2.$1"
+    printers "$1" "$2"
 fi
-dig $queries | awk '/ANSWER SECTION:/ { getline; split($1, a, "."); print "The subdomain", a[1], "is a", $4, "record and p
