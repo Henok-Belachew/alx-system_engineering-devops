@@ -1,26 +1,54 @@
 #!/usr/bin/env bash
 
-# Update the system
-sudo apt-get update
+# Update package list and upgrade existing packages
+sudo apt-get update && sudo apt-get upgrade -y
 
-# Install HAproxy
-sudo apt-get -y install haproxy
+# Install HAProxy and configure it to start automatically
+sudo apt-get install -y haproxy
+sudo systemctl enable haproxy
 
-# Configure HAproxy to load balance between web-01 and web-02
+# Backup the original configuration file and create a new one
+sudo mv /etc/haproxy/haproxy.cfg /etc/haproxy/haproxy.cfg.original
+sudo touch /etc/haproxy/haproxy.cfg
+
+# Set permissions for the new configuration file
+sudo chown root:root /etc/haproxy/haproxy.cfg
+sudo chmod 0644 /etc/haproxy/haproxy.cfg
+
+# Add the frontend and backend configurations to the new configuration file
 echo "
-frontend http-in
-    bind *:80
-    default_backend servers
+global
+    log /dev/log local0
+    log /dev/log local1 notice
+    chroot /var/lib/haproxy
+    stats socket /run/haproxy/admin.sock mode 660 level admin expose-fd listeners
+    stats timeout 30s
+    user haproxy
+    group haproxy
+    daemon
 
-backend servers
+defaults
+    log global
     mode http
+    option httplog
+    option dontlognull
+    option forwardfor
+    option http-server-close
+    timeout connect 5000
+    timeout client 50000
+    timeout server 50000
+
+frontend http_front
+    bind *:80
+    default_backend http_back
+
+backend http_back
     balance roundrobin
-    server 130100-web-01 54.158.189.235:80 check
-    server 130100-web-02 34.202.157.251:80 check
-" | sudo tee /etc/haproxy/haproxy.cfg
+    option httpchk HEAD / HTTP/1.1\r\nHost:localhost
+    server server1 192.0.2.1:80 check
+    server server2 192.0.2.2:80 check
+" | sudo tee -a /etc/haproxy/haproxy.cfg > /dev/null
 
-# Enable HAproxy service
-echo "ENABLED=1" | sudo tee /etc/default/haproxy
+# Restart the HAProxy service to apply the new configuration
+sudo systemctl restart haproxy
 
-# Restart HAproxy service
-sudo service haproxy restart
