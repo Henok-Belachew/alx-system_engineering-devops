@@ -45,8 +45,8 @@ frontend http_front
 backend http_back
     balance roundrobin
     option httpchk HEAD / HTTP/1.1\r\nHost:localhost
-    server server1 192.0.2.1:80 check
-    server server2 192.0.2.2:80 check
+    server 130100-web-01 54.236.8.157:80 check
+    server 130100-web-02 34.202.157.251:80 check
 " | sudo tee -a /etc/haproxy/haproxy.cfg > /dev/null
 
 # Restart the HAProxy service to apply the new configuration
