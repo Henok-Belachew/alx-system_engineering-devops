@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+
+# Check if the script is being run as root
+if [ "$(id -u)" != "0" ]; then
+	exit 1
+fi
+
+if [ $# -eq 0 ]; then
+	exit 1
+fi
+sudo -u "$1" whoami
