@@ -1,53 +1,41 @@
 #!/usr/bin/env bash
-# Update package list and upgrade existing packages
-sudo apt-get update && sudo apt-get upgrade -y
+# Install and configure HAproxy on your lb-01 server.
 
-# Install HAProxy and configure it to start automatically
-sudo apt-get install -y haproxy
-sudo systemctl enable haproxy
+apt-get update -y
+apt-get install -y software-properties-common
+add-apt-repository -y ppa:vbernat/haproxy-1.8
+apt-get update -y
+apt-get install -y haproxy=1.8.\*
 
-# Backup the original configuration file and create a new one
-sudo mv /etc/haproxy/haproxy.cfg /etc/haproxy/haproxy.cfg.original
-sudo touch /etc/haproxy/haproxy.cfg
+echo "ENABLED=1" >> /etc/default/haproxy
+mv /etc/haproxy/haproxy.cfg{,.original}
+touch /etc/haproxy/haproxy.cfg
 
-# Set permissions for the new configuration file
-sudo chown root:root /etc/haproxy/haproxy.cfg
-sudo chmod 0644 /etc/haproxy/haproxy.cfg
-
-# Add the frontend and backend configurations to the new configuration file
-echo "
-global
-    log /dev/log local0
-    log /dev/log local1 notice
-    chroot /var/lib/haproxy
-    stats socket /run/haproxy/admin.sock mode 660 level admin expose-fd listeners
-    stats timeout 30s
+printf %s "global
+    log 127.0.0.1 local0 notice
+    maxconn 2000
     user haproxy
     group haproxy
-    daemon
-
 defaults
-    log global
+    log     global
+    mode    http
+    option  httplog
+    option  dontlognull
+    retries 3
+    option redispatch
+    timeout connect  5000
+    timeout client  10000
+    timeout server  10000
+listen load_balancer
+    bind 0.0.0.0:80
     mode http
-    option httplog
-    option dontlognull
-    option forwardfor
-    option http-server-close
-    timeout connect 5000
-    timeout client 50000
-    timeout server 50000
-
-frontend http_front
-    bind *:80
-    default_backend http_back
-
-backend http_back
+    stats enable
+    stats uri /haproxy?stats
     balance roundrobin
-    option httpchk HEAD / HTTP/1.1\r\nHost:localhost
-    server 130100-web-01 54.236.8.157:80 check
-    server 130100-web-02 34.202.157.251:80 check
-" | sudo tee -a /etc/haproxy/haproxy.cfg > /dev/null
+    option httpclose
+    option forwardfor
+    server 130100-web-01 18.204.8.233:80 check
+    server 130100-web-02 18.234.249.123:80 check
+" >> /etc/haproxy/haproxy.cfg
 
-# Restart the HAProxy service to apply the new configuration
-sudo systemctl restart haproxy
-
+service haproxy start
